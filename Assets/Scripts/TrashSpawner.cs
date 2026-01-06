@@ -1,12 +1,20 @@
 using UnityEngine;
+
 public class TrashSpawner : MonoBehaviour
 {
-    public GameObject trashPrefab;
+    public GameObject[] trashPrefabs;
     public int trashCount = 50;
 
     void Start()
     {
-        SpawnTrash();
+        if (trashPrefabs != null && trashPrefabs.Length > 0)
+        {
+            SpawnTrash();
+        }
+        else
+        {
+            Debug.LogError("Список Trash Prefabs пуст! Перетащите префабы в инспекторе.");
+        }
     }
 
     void SpawnTrash()
@@ -29,8 +37,11 @@ public class TrashSpawner : MonoBehaviour
             {
                 if (hit.collider.CompareTag("Ground"))
                 {
+                    int randomIndex = Random.Range(0, trashPrefabs.Length);
+                    GameObject selectedTrash = trashPrefabs[randomIndex];
+
                     Instantiate(
-                        trashPrefab,
+                        selectedTrash,
                         hit.point + Vector3.up * 0.1f,
                         Quaternion.identity
                     );
