@@ -142,6 +142,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 79125d87cd53a5048818e655499b7dbb, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5169252601417774829}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 79125d87cd53a5048818e655499b7dbb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -4315466829876623620}
   m_SourcePrefab: {fileID: 100100000, guid: 79125d87cd53a5048818e655499b7dbb, type: 3}
 --- !u!1 &2634915521279332841 stripped
 GameObject:
@@ -163,7 +166,7 @@ MeshCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
@@ -192,8 +195,22 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 0
-  m_IsKinematic: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &-4315466829876623620
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2634915521279332841}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 525ebe7fcb34d0d4fb0e17fd240d21f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MovingTrash
+  speed: 2.5
+  changeDirectionTime: 2.5
