@@ -2,12 +2,12 @@ using UnityEngine;
 
 public class TrashSpawner : MonoBehaviour
 {
-    [Header("Настройки спавна")]
-    [SerializeField] private GameObject[] trashPrefabs; // Массив разных типов мусора
-    [SerializeField] private int trashCount = 20; // Количество мусора для спавна
-    [SerializeField] private Vector2 spawnAreaSize = new Vector2(50f, 50f); // Размер области спавна
-    [SerializeField] private float spawnHeight = 100f; // Высота для рейкаста
-    [SerializeField] private LayerMask groundLayer; // Слой земли
+    [Header("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ")]
+    [SerializeField] private GameObject[] trashPrefabs; // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+    [SerializeField] private int trashCount = 20; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+    [SerializeField] private Vector2 spawnAreaSize = new Vector2(50f, 50f); // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+    [SerializeField] private float spawnHeight = 100f; // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    [SerializeField] private LayerMask groundLayer; // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 
     void Start()
     {
@@ -22,31 +22,46 @@ public class TrashSpawner : MonoBehaviour
 
             if (randomPos != Vector3.zero)
             {
-                // Выбираем случайный префаб из массива
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 GameObject randomTrash = trashPrefabs[Random.Range(0, trashPrefabs.Length)];
 
-                // Спавним мусор
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
                 GameObject trash = Instantiate(randomTrash, randomPos, Quaternion.Euler(0, Random.Range(0f, 360f), 0));
 
-                // Случайный масштаб для разнообразия
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 float randomScale = Random.Range(0.8f, 1.2f);
                 trash.transform.localScale *= randomScale;
+
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ
+                if (trash.GetComponent<Rigidbody>() == null)
+                {
+                    Rigidbody rb = trash.AddComponent<Rigidbody>();
+                    rb.mass = 0.5f;
+                    rb.linearDamping = 1f;
+                    rb.useGravity = true;
+                }
+
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ
+                if (trash.GetComponent<Collider>() == null)
+                {
+                    trash.AddComponent<BoxCollider>();
+                }
             }
         }
     }
 
     Vector3 GetRandomGroundPosition()
     {
-        // Генерируем случайную позицию в области спавна
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         float randomX = Random.Range(-spawnAreaSize.x / 2, spawnAreaSize.x / 2);
         float randomZ = Random.Range(-spawnAreaSize.y / 2, spawnAreaSize.y / 2);
 
         Vector3 rayStart = transform.position + new Vector3(randomX, spawnHeight, randomZ);
 
-        // Пускаем луч вниз чтобы найти землю
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, spawnHeight * 2, groundLayer))
         {
-            // Проверяем тег Ground
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ Ground
             if (hit.collider.CompareTag("Ground"))
             {
                 return hit.point;
@@ -56,7 +71,7 @@ public class TrashSpawner : MonoBehaviour
         return Vector3.zero;
     }
 
-    // Визуализация области спавна в редакторе
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.green;
