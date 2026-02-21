@@ -89,6 +89,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d118a74593dc4af44b2d7fd755250612, type: 3}
       insertIndex: -1
       addedObject: {fileID: -5809693590103924594}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d118a74593dc4af44b2d7fd755250612, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5782856315430398580}
   m_SourcePrefab: {fileID: 100100000, guid: d118a74593dc4af44b2d7fd755250612, type: 3}
 --- !u!1 &8250900088301266298 stripped
 GameObject:
@@ -157,3 +160,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MovingTrash
   speed: 2.5
   changeDirectionTime: 2.5
+--- !u!114 &5782856315430398580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8250900088301266298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 808a853b159c5d5499512933b123ccfb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrashItemData

@@ -1,100 +1,134 @@
-using TMPro;
 using UnityEngine;
+using TMPro;
+using UnityEngine.UI; // Обязательно добавь это для работы со слайдером
+using System.Collections.Generic;
 
 public class TrashCounter : MonoBehaviour
 {
-    [Header("Настройки UI")]
+    [Header("Ресурсы")]
+    public TextMeshProUGUI moneyText;
+    public TextMeshProUGUI energyText;
+
+    [Header("Шкала загрязнения")]
+    public Slider pollutionSlider; // Перетащи сюда Slider из инспектора
+    public float globalPollution = 100f;
+
+    [Header("Текущий сбор")]
+    public int totalTrash = 0;
+    public int maxTrash = 10;
+    public Dictionary<TrashType, int> inventory = new Dictionary<TrashType, int>();
+
+    [Header("UI Меню")]
     public TextMeshProUGUI counterText;
-    public GameObject recyclingMenu; // Ссылка на твое меню переработки (Panel)
+    public TextMeshProUGUI statsText;
+    public GameObject recyclingMenu;
 
-    [Header("Настройки баланса")]
-    public int maxTrash = 10; // Сколько нужно собрать
-
-    [Header("Звук")]
-    public AudioClip trashCollectSound;
-    private AudioSource audioSource;
-
-    private int trashAmount = 0;
+    private int money;
+    private float energy;
 
     void Start()
     {
-        // Инициализируем звук
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
-        audioSource.playOnAwake = false;
+        money = PlayerPrefs.GetInt("Money", 0);
+        energy = PlayerPrefs.GetFloat("Energy", 0);
+        globalPollution = PlayerPrefs.GetFloat("GlobalPollution", 100f);
 
-        // Прячем меню переработки в начале игры
-        if (recyclingMenu != null) recyclingMenu.SetActive(false);
+        // Инициализация инвентаря
+        inventory[TrashType.Metal] = 0;
+        inventory[TrashType.Paper] = 0;
+        inventory[TrashType.Glass] = 0;
+        inventory[TrashType.Plastic] = 0;
 
-        UpdateText(); // Устанавливаем начальное значение 0/10
+        // Настройка слайдера
+        if (pollutionSlider != null)
+        {
+            pollutionSlider.maxValue = 100f;
+            pollutionSlider.value = globalPollution;
+        }
+
+        UpdateUI();
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Trash"))
         {
-            trashAmount++;
-            UpdateText();
-
-            // Звук
-            if (trashCollectSound != null) audioSource.PlayOneShot(trashCollectSound);
-
-            Destroy(other.gameObject);
-            Debug.Log("Мусор собран! Всего: " + trashAmount);
-
-            // ПРОВЕРКА: Собрали ли мы 10 штук?
-            if (trashAmount >= maxTrash)
+            TrashItemData data = other.GetComponent<TrashItemData>();
+            if (data != null)
             {
-                OpenRecyclingMenu();
+                inventory[data.type]++;
+                totalTrash++;
+                UpdateUI();
+                Destroy(other.gameObject);
+                if (totalTrash >= maxTrash) OpenMenu();
             }
         }
     }
 
-    void UpdateText()
+    void OpenMenu()
     {
-        if (counterText != null)
-        {
-            // Формат 0 / 10
-            counterText.text = "Trash: " + trashAmount.ToString() + " / " + maxTrash.ToString();
-        }
+        recyclingMenu.SetActive(true);
+        Time.timeScale = 0f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        statsText.text = $"СОБРАНО:\nМеталл: {inventory[TrashType.Metal]}\nБумага: {inventory[TrashType.Paper]}\nСтекло: {inventory[TrashType.Glass]}\nПакеты: {inventory[TrashType.Plastic]}";
     }
 
-    void OpenRecyclingMenu()
+    public void RecycleForMoney()
     {
-        if (recyclingMenu != null)
-        {
-            recyclingMenu.SetActive(true); // Показываем меню
-            Time.timeScale = 0f;          // Останавливаем игру (пауза)
-
-            // Включаем курсор, чтобы нажать на кнопки в меню
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
+        int reward = (inventory[TrashType.Metal] * 25) + (inventory[TrashType.Paper] * 20) +
+                     (inventory[TrashType.Glass] * 25) + (inventory[TrashType.Plastic] * 15);
+        money += reward;
+        globalPollution -= 5f; // Уменьшаем загрязнение на 5%
+        SaveAndClose();
     }
-    // Функция для кнопки "Переработать" (или продолжить игру)
-    public void ProcessRecycling()
+
+    public void RecycleForEnergy()
     {
-        Debug.Log("Мусор переработан!");
+        energy += totalTrash * 5;
+        globalPollution -= 2f; // Энергия чистит мир меньше
+        SaveAndClose();
+    }
 
-        // 1. Скрываем меню
-        if (recyclingMenu != null) recyclingMenu.SetActive(false);
+    void SaveAndClose()
+    {
+        if (globalPollution < 0) globalPollution = 0;
+        PlayerPrefs.SetInt("Money", money);
+        PlayerPrefs.SetFloat("Energy", energy);
+        PlayerPrefs.SetFloat("GlobalPollution", globalPollution);
+        PlayerPrefs.Save();
 
-        // 2. Запускаем время (снимаем паузу)
+        totalTrash = 0;
+        foreach (TrashType type in System.Enum.GetValues(typeof(TrashType))) inventory[type] = 0;
+
+        recyclingMenu.SetActive(false);
         Time.timeScale = 1f;
-
-        // 3. Обнуляем счетчик для нового круга
-        trashAmount = 0;
-        UpdateText();
-
-        // 4. Прячем курсор обратно
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        UpdateUI();
     }
 
-    // Функция для кнопки "Выход в главное меню"
-    public void GoToMainMenu()
+    void UpdateUI()
     {
-        Time.timeScale = 1f; // Обязательно возвращаем время перед сменой сцены!
-        UnityEngine.SceneManagement.SceneManager.LoadScene(0); // 0 - индекс сцены меню
+        counterText.text = $"Мусор: {totalTrash} / {maxTrash}";
+        moneyText.text = $"{money}"; // Пишем только число, так как иконка будет рядом
+        energyText.text = $"{energy}";
+        if (pollutionSlider != null) pollutionSlider.value = globalPollution;
+    }
+    public void ResetDataForTesting()
+    {
+        PlayerPrefs.DeleteAll(); // Стирает всё из памяти
+        money = 0;
+        energy = 0;
+        globalPollution = 100f;
+        totalTrash = 0;
+
+        // Обнуляем инвентарь
+        inventory[TrashType.Metal] = 0;
+        inventory[TrashType.Paper] = 0;
+        inventory[TrashType.Glass] = 0;
+        inventory[TrashType.Plastic] = 0;
+
+        UpdateUI();
+        Debug.Log("Данные полностью обнулены для теста!");
     }
 }
