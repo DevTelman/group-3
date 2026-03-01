@@ -1,5 +1,6 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; // Обязательно для работы со сценами
+using UnityEngine.SceneManagement;
+// Обязательно для работы со сценами
 
 public class MainMenu : MonoBehaviour
 {

@@ -1,51 +1,43 @@
-using UnityEngine;
+п»їusing UnityEngine;
+using UnityEngine.UI;
 using TMPro;
-using UnityEngine.UI; // Обязательно добавь это для работы со слайдером
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
+
 
 public class TrashCounter : MonoBehaviour
 {
-    [Header("Ресурсы")]
-    public TextMeshProUGUI moneyText;
-    public TextMeshProUGUI energyText;
+    public static int Money;
+    public static float Energy;
+    public static float EarthCleanliness;
 
-    [Header("Шкала загрязнения")]
-    public Slider pollutionSlider; // Перетащи сюда Slider из инспектора
-    public float globalPollution = 100f;
-
-    [Header("Текущий сбор")]
+    [Header("Settings")]
     public int totalTrash = 0;
     public int maxTrash = 10;
     public Dictionary<TrashType, int> inventory = new Dictionary<TrashType, int>();
 
-    [Header("UI Меню")]
+    [Header("UI Elements")]
     public TextMeshProUGUI counterText;
-    public TextMeshProUGUI statsText;
-    public GameObject recyclingMenu;
+    public TextMeshProUGUI moneyDisplay;
+    public TextMeshProUGUI energyDisplay;
+    public GameObject recyclingMenuCanvas;
 
-    private int money;
-    private float energy;
+    [Header("Eco Settings")]
+    public Image energyFillImage;
+    public TextMeshProUGUI ecoPercentText;
 
     void Start()
     {
-        money = PlayerPrefs.GetInt("Money", 0);
-        energy = PlayerPrefs.GetFloat("Energy", 0);
-        globalPollution = PlayerPrefs.GetFloat("GlobalPollution", 100f);
+        // ХЏХѕХµХЎХ¬Х¶ХҐЦЂХ« ХѕХҐЦЂХЎХЇХЎХ¶ХЈХ¶ХёЦ‚Хґ
+        Money = PlayerPrefs.GetInt("Money", 0);
+        Energy = PlayerPrefs.GetFloat("Energy", 0);
+        EarthCleanliness = PlayerPrefs.GetFloat("EarthCleanliness", 100f);
 
-        // Инициализация инвентаря
-        inventory[TrashType.Metal] = 0;
-        inventory[TrashType.Paper] = 0;
-        inventory[TrashType.Glass] = 0;
-        inventory[TrashType.Plastic] = 0;
-
-        // Настройка слайдера
-        if (pollutionSlider != null)
-        {
-            pollutionSlider.maxValue = 100f;
-            pollutionSlider.value = globalPollution;
-        }
-
+        ResetInventory();
         UpdateUI();
+
+        if (recyclingMenuCanvas != null)
+            recyclingMenuCanvas.SetActive(false);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -55,80 +47,120 @@ public class TrashCounter : MonoBehaviour
             TrashItemData data = other.GetComponent<TrashItemData>();
             if (data != null)
             {
+                if (!inventory.ContainsKey(data.type))
+                    inventory[data.type] = 0;
+
                 inventory[data.type]++;
                 totalTrash++;
                 UpdateUI();
                 Destroy(other.gameObject);
-                if (totalTrash >= maxTrash) OpenMenu();
+                if (totalTrash >= maxTrash)
+                    OpenMenu();
             }
+        }
+
+        if (other.CompareTag("ToxicTrash"))
+        {
+            Energy -= 100f;
+            EarthCleanliness += 3f;
+            UpdateUI();
+            Destroy(other.gameObject);
         }
     }
 
     void OpenMenu()
     {
-        recyclingMenu.SetActive(true);
-        Time.timeScale = 0f;
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        statsText.text = $"СОБРАНО:\nМеталл: {inventory[TrashType.Metal]}\nБумага: {inventory[TrashType.Paper]}\nСтекло: {inventory[TrashType.Glass]}\nПакеты: {inventory[TrashType.Plastic]}";
-    }
-
-    public void RecycleForMoney()
-    {
-        int reward = (inventory[TrashType.Metal] * 25) + (inventory[TrashType.Paper] * 20) +
-                     (inventory[TrashType.Glass] * 25) + (inventory[TrashType.Plastic] * 15);
-        money += reward;
-        globalPollution -= 5f; // Уменьшаем загрязнение на 5%
-        SaveAndClose();
+        if (recyclingMenuCanvas != null)
+        {
+            recyclingMenuCanvas.SetActive(true);
+            Time.timeScale = 0f;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
     }
 
     public void RecycleForEnergy()
     {
-        energy += totalTrash * 5;
-        globalPollution -= 2f; // Энергия чистит мир меньше
+        int mTotal = CalculatePotentialMoney();
+        Money -= Mathf.RoundToInt(mTotal * 0.3f);
+        Energy += totalTrash * 8f;
+        EarthCleanliness -= 2f;
+
+        SaveAndClose();
+    }
+
+    public void RecycleForMoney()
+    {
+        Money += CalculatePotentialMoney();
+
         SaveAndClose();
     }
 
     void SaveAndClose()
     {
-        if (globalPollution < 0) globalPollution = 0;
-        PlayerPrefs.SetInt("Money", money);
-        PlayerPrefs.SetFloat("Energy", energy);
-        PlayerPrefs.SetFloat("GlobalPollution", globalPollution);
+        EarthCleanliness = Mathf.Clamp(EarthCleanliness, 0f, 100f);
+
+        PlayerPrefs.SetInt("Money", Money);
+        PlayerPrefs.SetFloat("Energy", Energy);
+        PlayerPrefs.SetFloat("EarthCleanliness", EarthCleanliness);
         PlayerPrefs.Save();
 
         totalTrash = 0;
-        foreach (TrashType type in System.Enum.GetValues(typeof(TrashType))) inventory[type] = 0;
+        ResetInventory();
 
-        recyclingMenu.SetActive(false);
+        if (recyclingMenuCanvas != null)
+            recyclingMenuCanvas.SetActive(false);
+
         Time.timeScale = 1f;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
         UpdateUI();
+
+        // Ф±Х¶ЦЃХёЦ‚Хґ Level 2-Х«Х¶ (Index 2 ХЁХЅХї Ц„Хё Build Settings-Х«)
+        SceneManager.LoadScene(2);
     }
 
-    void UpdateUI()
+    public void UpdateUI()
     {
-        counterText.text = $"Мусор: {totalTrash} / {maxTrash}";
-        moneyText.text = $"{money}"; // Пишем только число, так как иконка будет рядом
-        energyText.text = $"{energy}";
-        if (pollutionSlider != null) pollutionSlider.value = globalPollution;
-    }
-    public void ResetDataForTesting()
-    {
-        PlayerPrefs.DeleteAll(); // Стирает всё из памяти
-        money = 0;
-        energy = 0;
-        globalPollution = 100f;
-        totalTrash = 0;
+        if (counterText != null)
+            counterText.text = $"Trash: {totalTrash}/{maxTrash}";
+        if (moneyDisplay != null)
+            moneyDisplay.text = $"Money: {Money}";
+        if (energyDisplay != null)
+            energyDisplay.text = $"Energy: {Energy:F0}";
+        if (ecoPercentText != null)
+            ecoPercentText.text = EarthCleanliness.ToString("F0") + "%";
 
-        // Обнуляем инвентарь
+        if (energyFillImage != null)
+        {
+            // ФїХЎЦЂХЈХЎХѕХёЦЂХёЦ‚Хґ ХҐХ¶Ц„ ХЇХЎЦЂХґХ«ЦЂ ХЈХ«Х®ХЁ ХЁХЅХї ХєХЎХ°ХєХЎХ¶ХѕХЎХ® ХґХЎХЇХЎЦЂХ¤ХЎХЇХ«
+            energyFillImage.fillAmount = (100f + EarthCleanliness) / 100f;
+        }
+    }
+
+    void ResetInventory()
+    {
+        inventory.Clear();
         inventory[TrashType.Metal] = 0;
         inventory[TrashType.Paper] = 0;
         inventory[TrashType.Glass] = 0;
         inventory[TrashType.Plastic] = 0;
+    }
 
-        UpdateUI();
-        Debug.Log("Данные полностью обнулены для теста!");
+    int CalculatePotentialMoney()
+    {
+        int total = 0;
+
+        if (inventory.ContainsKey(TrashType.Metal))
+            total += inventory[TrashType.Metal] * 25;
+        if (inventory.ContainsKey(TrashType.Paper))
+            total += inventory[TrashType.Paper] * 20;
+        if (inventory.ContainsKey(TrashType.Glass))
+            total += inventory[TrashType.Glass] * 25;
+        if (inventory.ContainsKey(TrashType.Plastic))
+            total += inventory[TrashType.Plastic] * 15;
+
+        return total;
     }
 }
