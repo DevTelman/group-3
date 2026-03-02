@@ -4,7 +4,6 @@ using TMPro;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 
-
 public class TrashCounter : MonoBehaviour
 {
     public static int Money;
@@ -16,11 +15,15 @@ public class TrashCounter : MonoBehaviour
     public int maxTrash = 10;
     public Dictionary<TrashType, int> inventory = new Dictionary<TrashType, int>();
 
-    [Header("UI Elements")]
+    [Header("UI Elements (Main HUD)")]
     public TextMeshProUGUI counterText;
     public TextMeshProUGUI moneyDisplay;
     public TextMeshProUGUI energyDisplay;
+
+    [Header("Recycle Menu Info")]
     public GameObject recyclingMenuCanvas;
+    [Tooltip("Այս մեկ տեքստի մեջ կլինի ամբողջ ինֆորմացիան")]
+    public TextMeshProUGUI infoSummaryText;
 
     [Header("Eco Settings")]
     public Image energyFillImage;
@@ -28,7 +31,6 @@ public class TrashCounter : MonoBehaviour
 
     void Start()
     {
-        // Տվյալների վերականգնում
         Money = PlayerPrefs.GetInt("Money", 0);
         Energy = PlayerPrefs.GetFloat("Energy", 0);
         EarthCleanliness = PlayerPrefs.GetFloat("EarthCleanliness", 100f);
@@ -76,13 +78,29 @@ public class TrashCounter : MonoBehaviour
             Time.timeScale = 0f;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+
+            // Կազմում ենք ամբողջ ինֆորմացիան մեկ տեքստի մեջ
+            if (infoSummaryText != null)
+            {
+                int pMoney = CalculatePotentialMoney();
+                float pEnergy = totalTrash * 8f;
+
+                infoSummaryText.text = $"<b>COLLECTED TRASH:</b>\n" +
+                                      $"Metal: {inventory[TrashType.Metal]}\n" +
+                                      $"Paper: {inventory[TrashType.Paper]}\n" +
+                                      $"Glass: {inventory[TrashType.Glass]}\n" +
+                                      $"Plastic: {inventory[TrashType.Plastic]}\n\n" +
+                                      $"<b>IF YOU RECYCLE:</b>\n" +
+                                      $"Potential Money: +${pMoney}\n" +
+                                      $"Potential Energy: +{pEnergy} E";
+            }
         }
     }
 
     public void RecycleForEnergy()
     {
         int mTotal = CalculatePotentialMoney();
-        Money -= Mathf.RoundToInt(mTotal * 0.3f);
+        Money += Mathf.RoundToInt(mTotal * 0.3f);
         Energy += totalTrash * 8f;
         EarthCleanliness -= 2f;
 
@@ -92,6 +110,7 @@ public class TrashCounter : MonoBehaviour
     public void RecycleForMoney()
     {
         Money += CalculatePotentialMoney();
+        EarthCleanliness += 1f;
 
         SaveAndClose();
     }
@@ -116,8 +135,6 @@ public class TrashCounter : MonoBehaviour
         Cursor.visible = false;
 
         UpdateUI();
-
-        // Անցում Level 2-ին (Index 2 ըստ քո Build Settings-ի)
         SceneManager.LoadScene(2);
     }
 
@@ -134,7 +151,6 @@ public class TrashCounter : MonoBehaviour
 
         if (energyFillImage != null)
         {
-            // Կարգավորում ենք կարմիր գիծը ըստ պահպանված մակարդակի
             energyFillImage.fillAmount = (100f + EarthCleanliness) / 100f;
         }
     }
@@ -151,16 +167,10 @@ public class TrashCounter : MonoBehaviour
     int CalculatePotentialMoney()
     {
         int total = 0;
-
-        if (inventory.ContainsKey(TrashType.Metal))
-            total += inventory[TrashType.Metal] * 25;
-        if (inventory.ContainsKey(TrashType.Paper))
-            total += inventory[TrashType.Paper] * 20;
-        if (inventory.ContainsKey(TrashType.Glass))
-            total += inventory[TrashType.Glass] * 25;
-        if (inventory.ContainsKey(TrashType.Plastic))
-            total += inventory[TrashType.Plastic] * 15;
-
+        if (inventory.ContainsKey(TrashType.Metal)) total += inventory[TrashType.Metal] * 25;
+        if (inventory.ContainsKey(TrashType.Paper)) total += inventory[TrashType.Paper] * 20;
+        if (inventory.ContainsKey(TrashType.Glass)) total += inventory[TrashType.Glass] * 25;
+        if (inventory.ContainsKey(TrashType.Plastic)) total += inventory[TrashType.Plastic] * 15;
         return total;
     }
 }
